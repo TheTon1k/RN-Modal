@@ -1,6 +1,5 @@
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ReanimatedModalView } from './src/components';
-import { useState } from 'react';
 import { Button, View } from 'react-native';
 import { useModal } from './src/hooks';
 

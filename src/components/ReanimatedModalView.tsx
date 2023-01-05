@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { Button, Text, TouchableWithoutFeedback } from 'react-native';
+import { Button, Text, TouchableWithoutFeedback, View } from 'react-native';
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import Animated, {
   SharedValue,
@@ -29,6 +29,8 @@ export const ReanimatedModalView: FC<ReanimatedModalViewProps> = ({
   backdropColor = '#000',
 }) => {
   const bottom = useSharedValue(-height);
+  const contentTop = useSharedValue(0);
+  const contentHeight = useSharedValue(0);
   const backdrop = useSharedValue(-screenHeight);
 
   const modalStyle = useAnimatedStyle(() => {
@@ -43,8 +45,18 @@ export const ReanimatedModalView: FC<ReanimatedModalViewProps> = ({
       height: height || 'auto',
       borderTopLeftRadius: borderRadius,
       borderTopRightRadius: borderRadius,
+      overflow: 'hidden',
     };
   }, [bottom.value]);
+
+  const contentStyle = useAnimatedStyle(() => {
+    return {
+      width: '100%',
+      flex: 1,
+      borderWidth: 1,
+      transform: [{ translateY: contentTop.value }],
+    };
+  }, [contentTop.value]);
 
   const backdropStyle = useAnimatedStyle(() => {
     return {
@@ -81,13 +93,17 @@ export const ReanimatedModalView: FC<ReanimatedModalViewProps> = ({
   };
 
   const gestureHandler = useAnimatedGestureHandler({
-    onStart(e, context: { bottom: number }) {
+    onStart(e, context: { bottom: number; top: number }) {
       context.bottom = bottom.value;
+      context.top = contentTop.value;
     },
     onActive(e, context) {
       const res = context.bottom - e.translationY;
-      if (res < 0) {
+      const contextOffset = context.top + e.translationY;
+      if (res < 0 && contentTop.value > 0) {
         bottom.value = res;
+      } else if (contextOffset < 0) {
+        contentTop.value = contextOffset;
       }
     },
     onEnd() {
@@ -107,7 +123,45 @@ export const ReanimatedModalView: FC<ReanimatedModalViewProps> = ({
 
       <PanGestureHandler onGestureEvent={gestureHandler}>
         <Animated.View style={modalStyle}>
-          <Text>asdqwe</Text>
+          {/*<PanGestureHandler onGestureEvent={gestureHandler}>*/}
+          <Animated.View
+            style={contentStyle}
+            onLayout={e => {
+              contentHeight.value = e.nativeEvent.layout.height;
+            }}
+          >
+            <View>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+              <Text>asdqwe</Text>
+            </View>
+          </Animated.View>
+          {/*</PanGestureHandler>*/}
+
           <Button
             title={'Close'}
             onPress={onCloseModal}
