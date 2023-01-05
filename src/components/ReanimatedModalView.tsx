@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { Button, StyleSheet, Text, TouchableWithoutFeedback } from 'react-native';
+import { Button, Text, TouchableWithoutFeedback } from 'react-native';
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import Animated, {
   SharedValue,
@@ -17,34 +17,47 @@ interface ReanimatedModalViewProps {
   paddingTop?: number;
   height?: number;
   borderRadius?: number;
+  backdropColor?: string;
 }
 
 export const ReanimatedModalView: FC<ReanimatedModalViewProps> = ({
   showModal,
   setShowModal,
   backdropOpacity = 0.7,
-  paddingTop = 100,
-  // height = screenHeight,
-  height = 200,
+  height = 400,
   borderRadius = 24,
+  backdropColor = '#000',
 }) => {
-  const top = useSharedValue(0);
-  const backdrop = useSharedValue(0);
+  const bottom = useSharedValue(-height);
+  const backdrop = useSharedValue(-screenHeight);
 
-  const style = useAnimatedStyle(() => {
+  const modalStyle = useAnimatedStyle(() => {
     return {
-      top: top.value,
+      position: 'absolute',
+      right: 0,
+      left: 0,
+      backgroundColor: '#EEE',
+      justifyContent: 'center',
+      alignItems: 'center',
+      bottom: bottom.value,
+      height: height || 'auto',
+      borderTopLeftRadius: borderRadius,
+      borderTopRightRadius: borderRadius,
     };
-  }, [top.value]);
+  }, [bottom.value]);
 
   const backdropStyle = useAnimatedStyle(() => {
-    const step = height / 100;
-    console.log('top.value', (screenHeight - top.value) / step / 100 / 100);
     return {
+      flex: 1,
+      position: 'absolute',
       top: backdrop.value,
-      opacity: backdropOpacity - (screenHeight - top.value) / step / 100,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      opacity: backdropOpacity - -bottom.value / height,
+      backgroundColor: backdropColor,
     };
-  }, [backdrop.value, top.value]);
+  }, [backdrop.value, bottom.value]);
 
   useAnimatedReaction(
     () => {
@@ -52,7 +65,7 @@ export const ReanimatedModalView: FC<ReanimatedModalViewProps> = ({
     },
     isOpening => {
       if (isOpening) {
-        withTimingAnimation(top, screenHeight - height);
+        withTimingAnimation(bottom, 0);
         withTimingAnimation(backdrop, 0, 0);
       }
     },
@@ -61,27 +74,27 @@ export const ReanimatedModalView: FC<ReanimatedModalViewProps> = ({
 
   const onCloseModal = () => {
     'worklet';
-    withTimingAnimation(top, screenHeight);
+    withTimingAnimation(bottom, -height);
     withDelayTimingAnimation(backdrop, screenHeight, 300, 0);
 
     setShowModal(false);
   };
 
   const gestureHandler = useAnimatedGestureHandler({
-    onStart(e, context: { top: number }) {
-      context.top = top.value;
+    onStart(e, context: { bottom: number }) {
+      context.bottom = bottom.value;
     },
     onActive(e, context) {
-      const res = context.top + e.translationY;
-      if (res > screenHeight - height) {
-        top.value = context.top + e.translationY;
+      const res = context.bottom - e.translationY;
+      if (res < 0) {
+        bottom.value = res;
       }
     },
     onEnd() {
-      if (top.value >= screenHeight - height / 1.5) {
+      if (-bottom.value >= height / 2.5) {
         onCloseModal();
       } else {
-        withTimingAnimation(top, screenHeight - height);
+        withTimingAnimation(bottom, 0);
       }
     },
   });
@@ -89,41 +102,11 @@ export const ReanimatedModalView: FC<ReanimatedModalViewProps> = ({
   return (
     <>
       <TouchableWithoutFeedback onPress={onCloseModal}>
-        <Animated.View
-          style={[
-            {
-              flex: 1,
-              backgroundColor: '#000',
-              position: 'absolute',
-              left: 0,
-              right: 0,
-              bottom: 0,
-              top: screenHeight,
-            },
-            backdropStyle,
-          ]}
-        />
+        <Animated.View style={backdropStyle} />
       </TouchableWithoutFeedback>
 
       <PanGestureHandler onGestureEvent={gestureHandler}>
-        <Animated.View
-          style={[
-            {
-              position: 'absolute',
-              left: 0,
-              right: 0,
-              bottom: 0,
-              top: screenHeight,
-              backgroundColor: '#EEE',
-              justifyContent: 'center',
-              alignItems: 'center',
-              borderTopLeftRadius: borderRadius,
-              borderTopRightRadius: borderRadius,
-              height: height || 'auto',
-            },
-            style,
-          ]}
-        >
+        <Animated.View style={modalStyle}>
           <Text>asdqwe</Text>
           <Button
             title={'Close'}
@@ -134,13 +117,3 @@ export const ReanimatedModalView: FC<ReanimatedModalViewProps> = ({
     </>
   );
 };
-
-const styles = StyleSheet.create({
-  wrapper: {
-    // position: 'absolute',
-    // left: 0,
-    // right: 0,
-    // bottom: 0,
-    // top: dimensions.height,
-  },
-});
